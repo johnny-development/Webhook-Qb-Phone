@@ -25,3 +25,11 @@ Enhanced server management and logging.
 Works with screenshot-basic and integrates seamlessly with qb-core.
 
 Fully customizable via the main.lua script.
+
+# 👤 Author 
+
+Developer: DINGO
+
+Development Team: Dingo's Development
+
+Discord: https://discord.gg/gxcZgsghzn 
