@@ -6,12 +6,54 @@ local Hashtags = {}
 local Calls = {}
 local Adverts = {}
 local GeneratedPlates = {}
-local WebHook = ''
-local FivemerrApiToken = 'API_KEY_HERE'
+local WebHook = 'YOUR_DISCORD_WEBHOOK_URL' -- Replace with your webhook URL
+local FivemerrApiToken = 'API_KEY_HERE' -- Replace with your Fivemerr API key if needed
 local bannedCharacters = { '%', '$', ';' }
 local TWData = {}
 
 -- Functions
+
+local function UploadScreenshotWithPlayerName(src)
+    exports['screenshot-basic']:requestClientScreenshot(src, {
+        encoding = 'png'
+    }, function(err, data)
+        if err then 
+            print("^1--- ERROR TAKING SCREENSHOT ---^7")
+            return
+        end
+
+        -- Get player information
+        local Player = QBCore.Functions.GetPlayer(src)
+        if not Player then
+            print("^1--- ERROR: Player not found ---^7")
+            return
+        end
+
+        local playerName = Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname
+
+        -- Send the webhook
+        PerformHttpRequest(WebHook, function(status, response)
+            if status ~= 200 then
+                print("^1--- ERROR UPLOADING IMAGE: " .. status .. " ---^7")
+                return
+            end
+
+            print("^2--- Screenshot successfully uploaded! ---^7")
+        end, "POST", json.encode({
+            username = "QB-Phone",
+            embeds = {{
+                title = "Screenshot Taken",
+                description = "**Taken By:** " .. playerName .. "\\n\\n**Screenshot URL:** Pending",
+                color = 65280 -- Green color for embed
+            }},
+            image = { url = "data:image/png;base64," .. data }
+        }), {
+            ['Authorization'] = FivemerrApiToken,
+            ['Content-Type'] = 'application/json'
+        })
+    end)
+end
+
 
 local function GetOnlineStatus(number)
     local Target = QBCore.Functions.GetPlayerByPhone(number)
@@ -638,6 +680,12 @@ end)
 
 -- Events
 
+RegisterNetEvent('qb-phone:server:TakeScreenshot', function()
+    local src = source
+    UploadScreenshotWithPlayerName(src)
+end)
+
+
 RegisterNetEvent('qb-phone:server:AddAdvert', function(msg, url)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
@@ -1075,6 +1123,10 @@ RegisterNetEvent('qb-phone:server:sendPing', function(data)
 end)
 
 -- Command
+
+QBCore.Commands.Add('takescreenshot', 'Take a screenshot and upload it', {}, false, function(source, args)
+    UploadScreenshotWithPlayerName(source)
+end, 'admin')
 
 QBCore.Commands.Add('setmetadata', 'Set Player Metadata (God Only)', {}, false, function(source, args)
     local Player = QBCore.Functions.GetPlayer(source)
